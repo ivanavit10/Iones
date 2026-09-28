@@ -1,1 +1,654 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IONES — Servidores dedicados por suscripción</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#070B14;
+    --bg-elevated:#101A2E;
+    --bg-card:#0C1526;
+    --cyan:#33E1FF;
+    --amber:#FFC24B;
+    --text:#E9EFF8;
+    --dim:#7C8AA6;
+    --line:#1D2A42;
+    --radius:14px;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--text);
+    font-family:'Inter', sans-serif;
+    line-height:1.5;
+    overflow-x:hidden;
+  }
+  h1,h2,h3, .display{
+    font-family:'Space Grotesk', sans-serif;
+    font-weight:600;
+    letter-spacing:-0.01em;
+  }
+  .mono{ font-family:'IBM Plex Mono', monospace; }
+  a{ color:inherit; text-decoration:none; }
+  img,svg{ display:block; }
+  .wrap{ max-width:1180px; margin:0 auto; padding:0 24px; }
 
+  /* ---------- background texture ---------- */
+  .grid-glow{
+    position:fixed; inset:0; z-index:0; pointer-events:none;
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(51,225,255,0.12), transparent 40%),
+      radial-gradient(circle at 85% 25%, rgba(255,194,75,0.08), transparent 35%),
+      linear-gradient(rgba(51,225,255,0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(51,225,255,0.05) 1px, transparent 1px);
+    background-size: auto, auto, 42px 42px, 42px 42px;
+  }
+
+  /* ---------- header ---------- */
+  header{
+    position:sticky; top:0; z-index:50;
+    background:rgba(7,11,20,0.82);
+    backdrop-filter: blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:18px 24px;
+  }
+  .logo{ display:flex; align-items:center; gap:10px; font-size:22px; font-weight:700; }
+  .logo .mark{ width:26px; height:26px; }
+  .logo .mark .electron{
+    transform-origin:13px 13px;
+    animation: orbit 3.2s linear infinite;
+  }
+  @media (prefers-reduced-motion: reduce){ .logo .mark .electron{ animation:none; } }
+  @keyframes orbit{ to{ transform:rotate(360deg); } }
+  .nav-links{ display:flex; gap:32px; font-size:15px; color:var(--dim); }
+  .nav-links a:hover{ color:var(--cyan); }
+  .nav-cta{
+    background:var(--amber); color:#1A1206; font-weight:600;
+    padding:10px 20px; border-radius:999px; font-size:14px;
+  }
+  .nav-links, .nav-cta{ }
+  @media (max-width: 760px){ .nav-links{ display:none; } }
+
+  /* ---------- hero ---------- */
+  .hero{ position:relative; z-index:1; padding:96px 24px 72px; text-align:center; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-family:'IBM Plex Mono', monospace; font-size:13px; color:var(--cyan);
+    border:1px solid rgba(51,225,255,0.35); padding:6px 14px; border-radius:999px;
+    margin-bottom:28px;
+  }
+  .eyebrow .dot{ width:6px; height:6px; border-radius:50%; background:var(--cyan); animation:pulse 1.8s ease-in-out infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1;} 50%{opacity:.25;} }
+  .hero h1{ font-size:clamp(36px,6vw,64px); line-height:1.05; max-width:820px; margin:0 auto 20px; }
+  .hero h1 .accent{ color:var(--cyan); }
+  .hero p.sub{ font-size:18px; color:var(--dim); max-width:560px; margin:0 auto 40px; }
+  .hero-ctas{ display:flex; gap:16px; justify-content:center; flex-wrap:wrap; }
+  .btn-primary{
+    background:var(--amber); color:#1A1206; font-weight:600; font-size:15px;
+    padding:14px 28px; border-radius:10px; border:none; cursor:pointer;
+  }
+  .btn-primary:hover{ filter:brightness(1.08); }
+  .btn-ghost{
+    background:transparent; color:var(--text); font-weight:500; font-size:15px;
+    padding:14px 28px; border-radius:10px; border:1px solid var(--line);
+  }
+  .btn-ghost:hover{ border-color:var(--cyan); color:var(--cyan); }
+
+  /* ---------- how it works ---------- */
+  .steps{ position:relative; z-index:1; padding:40px 24px 100px; }
+  .steps-grid{
+    display:grid; grid-template-columns:repeat(3,1fr); gap:24px; max-width:1000px; margin:0 auto;
+  }
+  @media (max-width:760px){ .steps-grid{ grid-template-columns:1fr; } }
+  .step{ background:var(--bg-card); border:1px solid var(--line); border-radius:var(--radius); padding:28px; }
+  .step .num{ font-family:'IBM Plex Mono',monospace; color:var(--cyan); font-size:13px; margin-bottom:14px; display:block; }
+  .step h3{ font-size:18px; margin-bottom:8px; }
+  .step p{ color:var(--dim); font-size:14.5px; }
+
+  /* ---------- pricing ---------- */
+  .pricing{ position:relative; z-index:1; padding:20px 24px 110px; }
+  .section-head{ text-align:center; max-width:640px; margin:0 auto 56px; }
+  .section-head span.tag{ font-family:'IBM Plex Mono',monospace; color:var(--amber); font-size:13px; }
+  .section-head h2{ font-size:clamp(28px,4vw,40px); margin:14px 0 12px; }
+  .section-head p{ color:var(--dim); }
+
+  .rack{ display:grid; grid-template-columns:repeat(4,1fr); gap:20px; max-width:1180px; margin:0 auto; }
+  @media (max-width:1080px){ .rack{ grid-template-columns:repeat(2,1fr); } }
+  @media (max-width:600px){ .rack{ grid-template-columns:1fr; } }
+
+  .unit{
+    background:linear-gradient(180deg, var(--bg-elevated), var(--bg-card));
+    border:1px solid var(--line); border-radius:var(--radius);
+    padding:26px 24px; display:flex; flex-direction:column; gap:18px;
+    position:relative; transition:transform .18s ease, border-color .18s ease;
+  }
+  .unit:hover{ transform:translateY(-4px); border-color:rgba(51,225,255,0.4); }
+  .unit.featured{ border-color:var(--amber); box-shadow:0 0 0 1px rgba(255,194,75,0.25); }
+  .unit-top{ display:flex; align-items:center; justify-content:space-between; }
+  .led-row{ display:flex; gap:5px; }
+  .led{ width:6px; height:6px; border-radius:50%; background:var(--line); }
+  .unit:hover .led:nth-child(1){ background:var(--cyan); }
+  .unit:hover .led:nth-child(2){ background:var(--cyan); animation:pulse 1.4s ease-in-out infinite .2s; }
+  .unit-name{ font-size:12px; color:var(--dim); font-family:'IBM Plex Mono',monospace; letter-spacing:.04em; }
+  .unit h3{ font-size:22px; }
+  .badge{
+    font-family:'IBM Plex Mono',monospace; font-size:10.5px; color:#1A1206;
+    background:var(--amber); padding:3px 9px; border-radius:999px; letter-spacing:.03em;
+  }
+  .price{ font-family:'IBM Plex Mono',monospace; }
+  .price .amount{ font-size:32px; font-weight:600; color:var(--text); }
+  .price .period{ font-size:13px; color:var(--dim); }
+  .price-sub{ font-size:11.5px; color:var(--cyan); margin-top:4px; }
+
+  .billing-note{
+    text-align:center; font-size:13px; color:var(--dim);
+    margin:-24px 0 32px;
+  }
+  .billing-link{
+    background:none; border:none; padding:0; margin:0;
+    color:var(--dim); font-size:12px; text-decoration:underline;
+    cursor:pointer; font-family:'Inter',sans-serif;
+  }
+  .billing-link:hover{ color:var(--cyan); }
+  .specs{ list-style:none; display:flex; flex-direction:column; gap:9px; border-top:1px solid var(--line); padding-top:16px; }
+  .specs li{
+    display:flex; justify-content:space-between; font-size:13.5px;
+    font-family:'IBM Plex Mono',monospace; color:var(--dim);
+  }
+  .specs li b{ color:var(--text); font-weight:500; }
+  .unit-cta{
+    margin-top:auto; width:100%; background:var(--cyan); color:#062028; font-weight:600;
+    padding:12px; border-radius:9px; border:none; cursor:pointer; font-size:14.5px;
+  }
+  .unit.featured .unit-cta{ background:var(--amber); color:#1A1206; }
+  .unit-cta:hover{ filter:brightness(1.08); }
+
+  /* ---------- trust / footer ---------- */
+  .footer{ position:relative; z-index:1; border-top:1px solid var(--line); padding:48px 24px; }
+  .footer-row{ display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:16px; }
+  .footer p{ color:var(--dim); font-size:13.5px; }
+  .fine{ max-width:1180px; margin:24px auto 0; color:var(--dim); font-size:12px; opacity:.7; }
+
+  /* ---------- modal ---------- */
+  .overlay{
+    position:fixed; inset:0; background:rgba(4,7,13,0.72); backdrop-filter:blur(4px);
+    display:none; align-items:center; justify-content:center; z-index:100; padding:20px;
+  }
+  .overlay.open{ display:flex; }
+  .modal{
+    background:var(--bg-elevated); border:1px solid var(--line); border-radius:16px;
+    max-width:440px; width:100%; padding:30px; position:relative;
+  }
+  .modal-close{
+    position:absolute; top:16px; right:16px; background:none; border:none; color:var(--dim);
+    font-size:20px; cursor:pointer; line-height:1;
+  }
+  .modal-close:hover{ color:var(--text); }
+  .modal-plan{ font-family:'IBM Plex Mono',monospace; color:var(--cyan); font-size:13px; margin-bottom:6px; }
+  .modal h3{ font-size:24px; margin-bottom:4px; }
+  .modal .modal-price{ color:var(--dim); font-size:14px; margin-bottom:22px; }
+  .modal .modal-price b{ color:var(--text); font-family:'IBM Plex Mono',monospace; }
+  #paypal-button-container{ min-height:45px; margin-top:6px; }
+  .modal-note{ font-size:12px; color:var(--dim); margin-top:16px; text-align:center; }
+
+  .lead-form{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
+  .lead-form label{
+    display:flex; flex-direction:column; gap:5px; font-size:12.5px; color:var(--dim);
+  }
+  .lead-form input{
+    background:var(--bg-card); border:1px solid var(--line); border-radius:8px;
+    padding:10px 12px; color:var(--text); font-family:'Inter',sans-serif; font-size:14px;
+  }
+  .lead-form input:focus{ outline:none; border-color:var(--cyan); }
+  .lead-row{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .lead-error{ color:#ff8a8a; font-size:12px; text-align:center; min-height:16px; margin-top:2px; }
+</style>
+</head>
+<body>
+
+<div class="grid-glow"></div>
+
+<header>
+  <nav class="wrap">
+    <div class="logo">
+      <svg class="mark" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="13" cy="13" r="3.4" fill="#33E1FF"/>
+        <ellipse cx="13" cy="13" rx="11" ry="4.2" stroke="#33E1FF" stroke-width="1.3" opacity="0.55"/>
+        <g class="electron">
+          <circle cx="24" cy="13" r="1.8" fill="#FFC24B"/>
+        </g>
+      </svg>
+      <span>IONES</span>
+    </div>
+    <div class="nav-links">
+      <a href="#planes">Planes</a>
+      <a href="#como-funciona">Cómo funciona</a>
+      <a href="#contacto">Contacto</a>
+    </div>
+    <a href="#planes" class="nav-cta">Ver planes</a>
+  </nav>
+</header>
+
+<section class="hero">
+  <div class="wrap">
+    <span class="eyebrow"><span class="dot"></span> Servidores Windows activos en minutos</span>
+    <h1>Renta un servidor con la <span class="accent">carga de un ion</span>, la estabilidad de un rack.</h1>
+    <p class="sub">Windows Server dedicado, NVMe puro y soporte en español. Paga cada mes con tarjeta o PayPal, sin contratos forzosos.</p>
+    <div class="hero-ctas">
+      <a href="#planes" class="btn-primary">Elegir mi servidor</a>
+      <a href="#como-funciona" class="btn-ghost">Cómo funciona</a>
+    </div>
+  </div>
+</section>
+
+<section class="steps" id="como-funciona">
+  <div class="wrap">
+    <div class="steps-grid">
+      <div class="step">
+        <span class="num">01 · ELIGE</span>
+        <h3>Selecciona tu plan</h3>
+        <p>Compara vCores, RAM y NVMe. Cambia de plan cuando tu operación lo necesite.</p>
+      </div>
+      <div class="step">
+        <span class="num">02 · PAGA</span>
+        <h3>Registra tu cobro mensual</h3>
+        <p>Tarjeta de crédito, débito o PayPal. El cobro se repite cada mes de forma automática.</p>
+      </div>
+      <div class="step">
+        <span class="num">03 · OPERA</span>
+        <h3>Recibe tus accesos</h3>
+        <p>Credenciales de Windows Server listas para conectarte por RDP el mismo día.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="pricing" id="planes">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="tag">PLANES IONES</span>
+      <h2>Cuatro configuraciones, un solo cobro</h2>
+      <p>Todos los planes incluyen Windows Server, IP dedicada y soporte técnico.</p>
+    </div>
+
+    <div class="billing-note" id="billingNote">
+      Facturación anual seleccionada — <button type="button" class="billing-link" onclick="setBilling('monthly')">pagar mes a mes</button>
+    </div>
+
+    <div class="rack">
+
+      <div class="unit"
+           data-plan="M+"
+           data-price-monthly="1880" data-planid-monthly="P-7UE76062D2450953KNK2E53Q"
+           data-price-annual="20680" data-planid-annual="PLAN_M_PLUS_ANUAL">
+        <div class="unit-top">
+          <span class="unit-name">WINDOWS · M+</span>
+          <div class="led-row"><span class="led"></span><span class="led"></span></div>
+        </div>
+        <h3>M+</h3>
+        <div class="price">
+          <span class="amount js-amount">$1,723</span> <span class="period js-period">MXN /mes</span>
+          <div class="price-sub js-sub">$20,680 MXN al año · ahorras 1 mes</div>
+        </div>
+        <ul class="specs">
+          <li><span>vCores CPU</span><b>4</b></li>
+          <li><span>Memoria RAM</span><b>4 GB</b></li>
+          <li><span>Almacenamiento</span><b>120 GB NVMe</b></li>
+        </ul>
+        <button class="unit-cta" onclick="openCheckout(this)">Rentar M+</button>
+      </div>
+
+      <div class="unit"
+           data-plan="L+"
+           data-price-monthly="2990" data-planid-monthly="P-8PC84153NK493043GNK2E53Y"
+           data-price-annual="32890" data-planid-annual="PLAN_L_PLUS_ANUAL">
+        <div class="unit-top">
+          <span class="unit-name">WINDOWS · L+</span>
+          <div class="led-row"><span class="led"></span><span class="led"></span></div>
+        </div>
+        <h3>L+</h3>
+        <div class="price">
+          <span class="amount js-amount">$2,741</span> <span class="period js-period">MXN /mes</span>
+          <div class="price-sub js-sub">$32,890 MXN al año · ahorras 1 mes</div>
+        </div>
+        <ul class="specs">
+          <li><span>vCores CPU</span><b>6</b></li>
+          <li><span>Memoria RAM</span><b>8 GB</b></li>
+          <li><span>Almacenamiento</span><b>240 GB NVMe</b></li>
+        </ul>
+        <button class="unit-cta" onclick="openCheckout(this)">Rentar L+</button>
+      </div>
+
+      <div class="unit featured"
+           data-plan="XL+"
+           data-price-monthly="4640" data-planid-monthly="P-43K53515YM0755914NK2E54A"
+           data-price-annual="51040" data-planid-annual="PLAN_XL_PLUS_ANUAL">
+        <div class="unit-top">
+          <span class="unit-name">WINDOWS · XL+</span>
+          <span class="badge">MÁS ELEGIDO</span>
+        </div>
+        <h3>XL+</h3>
+        <div class="price">
+          <span class="amount js-amount">$4,253</span> <span class="period js-period">MXN /mes</span>
+          <div class="price-sub js-sub">$51,040 MXN al año · ahorras 1 mes</div>
+        </div>
+        <ul class="specs">
+          <li><span>vCores CPU</span><b>8</b></li>
+          <li><span>Memoria RAM</span><b>16 GB</b></li>
+          <li><span>Almacenamiento</span><b>480 GB NVMe</b></li>
+        </ul>
+        <button class="unit-cta" onclick="openCheckout(this)">Rentar XL+</button>
+      </div>
+
+      <div class="unit"
+           data-plan="XXL+"
+           data-price-monthly="6800" data-planid-monthly="P-7WJ88224PA946051CNK2E54A"
+           data-price-annual="74800" data-planid-annual="PLAN_XXL_PLUS_ANUAL">
+        <div class="unit-top">
+          <span class="unit-name">WINDOWS · XXL+</span>
+          <div class="led-row"><span class="led"></span><span class="led"></span></div>
+        </div>
+        <h3>XXL+</h3>
+        <div class="price">
+          <span class="amount js-amount">$6,233</span> <span class="period js-period">MXN /mes</span>
+          <div class="price-sub js-sub">$74,800 MXN al año · ahorras 1 mes</div>
+        </div>
+        <ul class="specs">
+          <li><span>vCores CPU</span><b>12</b></li>
+          <li><span>Memoria RAM</span><b>24 GB</b></li>
+          <li><span>Almacenamiento</span><b>720 GB NVMe</b></li>
+        </ul>
+        <button class="unit-cta" onclick="openCheckout(this)">Rentar XXL+</button>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<footer class="footer" id="contacto">
+  <div class="wrap">
+    <div class="footer-row">
+      <div class="logo" style="font-size:18px;">
+        <svg class="mark" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg" style="width:20px;height:20px;">
+          <circle cx="13" cy="13" r="3.4" fill="#33E1FF"/>
+          <ellipse cx="13" cy="13" rx="11" ry="4.2" stroke="#33E1FF" stroke-width="1.3" opacity="0.55"/>
+        </svg>
+        <span>IONES</span>
+      </div>
+      <p>ventas@iones.mx · Soporte en español, cobertura nacional</p>
+    </div>
+    <p class="fine">
+      IONES renta infraestructura de servidores Windows con facturación mensual recurrente. Los precios están expresados en pesos mexicanos (MXN) y no incluyen impuestos.
+      Este sitio es una plantilla funcional: la integración de pago mostrada requiere que conectes tus propias credenciales de PayPal Business (Client ID y planes de facturación) para procesar cobros reales — ver notas en el código fuente.
+    </p>
+  </div>
+</footer>
+
+<!-- ---------- Checkout modal ---------- -->
+<div class="overlay" id="checkoutOverlay">
+  <div class="modal">
+    <button class="modal-close" onclick="closeCheckout()">&times;</button>
+    <div class="modal-plan" id="modalPlanTag">PLAN</div>
+    <h3 id="modalPlanName">—</h3>
+    <p class="modal-price">Cobro: <b id="modalPlanPrice">$0 MXN</b></p>
+
+    <!-- Paso 1: datos de facturación -->
+    <form id="leadForm" class="lead-form" onsubmit="handleLeadSubmit(event)">
+      <label>Empresa
+        <input type="text" name="empresa" required autocomplete="organization">
+      </label>
+      <div class="lead-row">
+        <label>RFC
+          <input type="text" name="rfc" required maxlength="13" autocomplete="off" style="text-transform:uppercase">
+        </label>
+        <label>Código postal
+          <input type="text" name="cp" required maxlength="5" inputmode="numeric" autocomplete="postal-code">
+        </label>
+      </div>
+      <label>Nombre de contacto
+        <input type="text" name="nombre" required autocomplete="name">
+      </label>
+      <label>Correo
+        <input type="email" name="correo" required autocomplete="email">
+      </label>
+      <label>Teléfono
+        <input type="tel" name="telefono" required maxlength="10" inputmode="numeric" autocomplete="tel">
+      </label>
+      <button type="submit" class="unit-cta" id="leadSubmitBtn">Continuar al pago</button>
+      <p class="lead-error" id="leadError"></p>
+    </form>
+
+    <!-- Paso 2: pago (aparece después de llenar el formulario) -->
+    <div id="paymentStep" style="display:none;">
+      <p class="modal-note" style="margin-top:0;">Datos registrados. Elige cómo pagar:</p>
+      <div id="paypal-button-container"></div>
+    </div>
+
+    <p class="modal-note">Al confirmar, PayPal te permite pagar con tu cuenta o con tarjeta de crédito/débito como invitado. El cobro se repite automáticamente hasta que canceles.</p>
+  </div>
+</div>
+
+<!--
+  ============================================================
+  CONFIGURACIÓN DE PAGOS (PayPal Subscriptions)
+  ============================================================
+  Este sitio usa el PayPal JS SDK en modo "subscription" para cobrar
+  cada mes de forma automática (con opción de pagar con tarjeta como invitado).
+
+  Para activarlo con cobros reales necesitas:
+
+  1) Una cuenta PayPal Business verificada.
+  2) Crear un "Producto" y 8 planes de facturación (4 mensuales + 4
+     anuales, uno de cada tipo por plan: M+, L+, XL+, XXL+) — el script
+     scripts/setup-catalog.js del backend ya los crea todos por ti.
+     Mensual: 1880, 2990, 4640, 6800 MXN/mes.
+     Anual:  20680, 32890, 51040, 74800 MXN/año (equivale a 11 meses).
+  3) Reemplazar en el HTML:
+       client-id=...                        -> tu Client ID real de PayPal
+       data-planid-monthly="P-..."          -> Plan ID mensual real (uno por tarjeta)
+       data-planid-annual="P-..."           -> Plan ID anual real (uno por tarjeta)
+  4) Configurar un Webhook en PayPal (BILLING.SUBSCRIPTION.ACTIVATED /
+     .CANCELLED / .PAYMENT.FAILED) apuntando a tu backend, para que tu
+     sistema sepa cuándo activar o suspender cada servidor.
+
+  Nota importante: cobrar de forma recurrente y activar servidores
+  automáticamente requiere un backend (Node, PHP, etc.) que reciba esos
+  webhooks y guarde el estado del cliente — esto no puede vivir sólo en
+  este HTML por seguridad. Este archivo cubre el front-end completo:
+  catálogo, precios y el botón de pago listo para conectarse.
+  ============================================================
+-->
+<script src="https://www.paypal.com/sdk/js?client-id=BAA8RDOcQT8J4Eh9rSoo_03DgGdZXr7a0BCB2oULdbkMDfTUEfRPhkxlnX_iIYpgoAkTduLNFz6xDNx1uc&currency=MXN&intent=subscription&vault=true&locale=es_MX"></script>
+
+<script>
+  /* =========================================================
+     A DÓNDE LLEGA EL FORMULARIO DE EMPRESA
+     =========================================================
+     Por defecto usa https://formsubmit.co (gratis, sin backend):
+     cada envío del formulario te llega por correo.
+     1) Cambia TU-CORREO@ejemplo.com por tu correo real, abajo en LEAD_ENDPOINT.
+     2) La primera vez que alguien llene el formulario, PayPal... digo,
+        FormSubmit te manda un correo de confirmación — dale clic para
+        activarlo. Después de eso, cada envío llega directo a tu correo.
+
+     Si más adelante prefieres guardar los datos en tu propio backend
+     (iones-backend) y ligarlos automáticamente con la suscripción de
+     PayPal, cambia LEAD_ENDPOINT por algo como:
+       https://tu-backend.onrender.com/api/leads
+     (esa ruta ya viene incluida en el backend, ver routes/leads.js)
+     ========================================================= */
+  const LEAD_ENDPOINT = 'https://formsubmit.co/ajax/ionesventas@gmail.com';
+
+  // Ciclo de facturación activo: 'annual' (por defecto) o 'monthly'
+  let billingCycle = 'annual';
+  let currentLeadId = null;
+
+  function fmtMoney(n){ return '$' + Number(n).toLocaleString('es-MX'); }
+
+  function setBilling(cycle){
+    billingCycle = cycle;
+    document.querySelectorAll('.unit').forEach(function(unit){
+      const monthlyPrice = Number(unit.getAttribute('data-price-monthly'));
+      const annualPrice = Number(unit.getAttribute('data-price-annual'));
+      const amountEl = unit.querySelector('.js-amount');
+      const periodEl = unit.querySelector('.js-period');
+      const subEl = unit.querySelector('.js-sub');
+
+      if(cycle === 'annual'){
+        amountEl.textContent = fmtMoney(Math.round(annualPrice / 12));
+        periodEl.textContent = 'MXN /mes';
+        subEl.style.display = 'block';
+        subEl.textContent = fmtMoney(annualPrice) + ' MXN al año · ahorras 1 mes';
+      } else {
+        amountEl.textContent = fmtMoney(monthlyPrice);
+        periodEl.textContent = 'MXN /mes';
+        subEl.style.display = 'none';
+      }
+    });
+
+    const note = document.getElementById('billingNote');
+    if(cycle === 'annual'){
+      note.innerHTML = 'Facturación anual seleccionada — <button type="button" class="billing-link" onclick="setBilling(\'monthly\')">pagar mes a mes</button>';
+    } else {
+      note.innerHTML = 'Facturación mensual seleccionada — <button type="button" class="billing-link" onclick="setBilling(\'annual\')">cambiar a anual (ahorra 1 mes)</button>';
+    }
+  }
+
+  function openCheckout(btn){
+    const unit = btn.closest('.unit');
+    const plan = unit.getAttribute('data-plan');
+
+    const price = billingCycle === 'annual'
+      ? unit.getAttribute('data-price-annual')
+      : unit.getAttribute('data-price-monthly');
+    const planId = billingCycle === 'annual'
+      ? unit.getAttribute('data-planid-annual')
+      : unit.getAttribute('data-planid-monthly');
+    const periodLabel = billingCycle === 'annual' ? 'MXN / año' : 'MXN / mes';
+
+    document.getElementById('modalPlanTag').textContent = 'PLAN ' + plan + (billingCycle === 'annual' ? ' · ANUAL' : ' · MENSUAL');
+    document.getElementById('modalPlanName').textContent = 'Windows ' + plan;
+    document.getElementById('modalPlanPrice').textContent = fmtMoney(price) + ' ' + periodLabel;
+
+    // Reinicia el modal: mostrar el formulario, ocultar el pago
+    currentLeadId = null;
+    document.getElementById('leadForm').reset();
+    document.getElementById('leadForm').style.display = 'flex';
+    document.getElementById('leadError').textContent = '';
+    document.getElementById('leadSubmitBtn').disabled = false;
+    document.getElementById('leadSubmitBtn').textContent = 'Continuar al pago';
+    document.getElementById('paymentStep').style.display = 'none';
+    document.getElementById('paypal-button-container').innerHTML = '';
+
+    // Guarda los datos del plan elegido en el propio formulario, para usarlos al enviarlo
+    const form = document.getElementById('leadForm');
+    form.dataset.plan = plan;
+    form.dataset.planId = planId;
+    form.dataset.price = price;
+    form.dataset.billing = billingCycle;
+
+    document.getElementById('checkoutOverlay').classList.add('open');
+  }
+
+  async function handleLeadSubmit(evt){
+    evt.preventDefault();
+    const form = evt.target;
+    const errorEl = document.getElementById('leadError');
+    const submitBtn = document.getElementById('leadSubmitBtn');
+    errorEl.textContent = '';
+
+    const data = Object.fromEntries(new FormData(form).entries());
+
+    // Validaciones simples
+    if(data.rfc.length < 12){
+      errorEl.textContent = 'El RFC debe tener 12 o 13 caracteres.';
+      return;
+    }
+    if(data.cp.length !== 5){
+      errorEl.textContent = 'El código postal debe tener 5 dígitos.';
+      return;
+    }
+    if(data.telefono.length !== 10){
+      errorEl.textContent = 'El teléfono debe tener 10 dígitos.';
+      return;
+    }
+
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Enviando...';
+
+    currentLeadId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
+
+    const payload = {
+      leadId: currentLeadId,
+      plan: form.dataset.plan,
+      facturacion: form.dataset.billing,
+      monto: form.dataset.price,
+      ...data,
+    };
+
+    try {
+      await fetch(LEAD_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      // No bloqueamos el pago aunque falle el envío del formulario de datos;
+      // igual queda el registro del lado de PayPal (nombre/correo del pagador).
+      console.warn('No se pudo enviar el formulario de empresa:', err);
+    }
+
+    form.style.display = 'none';
+    document.getElementById('paymentStep').style.display = 'block';
+    renderPayPalButton(form.dataset.planId, form.dataset.plan);
+  }
+
+  function renderPayPalButton(planId, plan){
+    const container = document.getElementById('paypal-button-container');
+    container.innerHTML = '';
+
+    if(window.paypal){
+      paypal.Buttons({
+        style:{ layout:'vertical', color:'gold', shape:'rect', label:'subscribe' },
+        createSubscription: function(data, actions){
+          return actions.subscription.create({
+            plan_id: planId,
+            custom_id: currentLeadId || undefined,
+          });
+        },
+        onApprove: function(data){
+          alert('Suscripción iniciada. ID: ' + data.subscriptionID + '\n(Conecta esto a tu backend para activar el servidor ' + plan + ')');
+          closeCheckout();
+        },
+        onError: function(err){
+          console.error(err);
+          container.innerHTML = '<p style="color:#ff8a8a; font-size:13px;">No se pudo cargar el pago. Verifica el Plan ID de PayPal para este plan.</p>';
+        }
+      }).render('#paypal-button-container');
+    } else {
+      container.innerHTML = '<p style="color:#ff8a8a; font-size:13px;">El SDK de PayPal no cargó. Revisa tu conexión o el client-id configurado.</p>';
+    }
+  }
+
+  function closeCheckout(){
+    document.getElementById('checkoutOverlay').classList.remove('open');
+  }
+
+  document.getElementById('checkoutOverlay').addEventListener('click', function(e){
+    if(e.target === this) closeCheckout();
+  });
+
+  // Pinta los precios anuales apenas carga la página (billingCycle = 'annual' por defecto)
+  document.addEventListener('DOMContentLoaded', function(){ setBilling('annual'); });
+</script>
+
+</body>
+</html>

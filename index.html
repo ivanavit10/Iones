@@ -386,10 +386,10 @@
         </svg>
         <span>IONES</span>
       </div>
-      <p>ionesventas@gmail.com · Soporte en español, cobertura nacional</p>
+      <p>ventas@iones.mx · Soporte en español, cobertura nacional</p>
     </div>
     <p class="fine">
-      IONES renta infraestructura de servidores Windows con facturación mensual recurrente. Los precios están expresados en pesos mexicanos (MXN) e incluyen impuestos.
+      IONES renta infraestructura de servidores Windows con facturación mensual recurrente. Los precios están expresados en pesos mexicanos (MXN) y no incluyen impuestos.
       Este sitio es una plantilla funcional: la integración de pago mostrada requiere que conectes tus propias credenciales de PayPal Business (Client ID y planes de facturación) para procesar cobros reales — ver notas en el código fuente.
     </p>
   </div>
@@ -476,20 +476,20 @@
   /* =========================================================
      A DÓNDE LLEGA EL FORMULARIO DE EMPRESA
      =========================================================
-     Por defecto usa https://formsubmit.co (gratis, sin backend):
-     cada envío del formulario te llega por correo.
-     1) Cambia TU-CORREO@ejemplo.com por tu correo real, abajo en LEAD_ENDPOINT.
-     2) La primera vez que alguien llene el formulario, PayPal... digo,
-        FormSubmit te manda un correo de confirmación — dale clic para
-        activarlo. Después de eso, cada envío llega directo a tu correo.
+     Usa Web3Forms (gratis, sin backend, funciona directo con fetch
+     desde cualquier dominio): cada envío del formulario te llega
+     por correo a ionesventas@gmail.com. El WEB3FORMS_ACCESS_KEY de
+     abajo ya está ligado a ese correo, no necesitas activar nada más.
 
      Si más adelante prefieres guardar los datos en tu propio backend
      (iones-backend) y ligarlos automáticamente con la suscripción de
      PayPal, cambia LEAD_ENDPOINT por algo como:
        https://tu-backend.onrender.com/api/leads
-     (esa ruta ya viene incluida en el backend, ver routes/leads.js)
+     (esa ruta ya viene incluida en el backend, ver routes/leads.js —
+     en ese caso también borra la línea de access_key del payload)
      ========================================================= */
-  const LEAD_ENDPOINT = 'https://formsubmit.co/ajax/ionesventas@gmail.com';
+  const LEAD_ENDPOINT = 'https://api.web3forms.com/submit';
+  const WEB3FORMS_ACCESS_KEY = '21d98efb-db95-4162-9b70-105e82845e69';
 
   // Ciclo de facturación activo: 'annual' (por defecto) o 'monthly'
   let billingCycle = 'annual';
@@ -600,6 +600,8 @@
     currentLeadId = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : String(Date.now());
 
     const payload = {
+      access_key: WEB3FORMS_ACCESS_KEY,
+      subject: 'Nueva solicitud IONES — ' + form.dataset.plan,
       leadId: currentLeadId,
       plan: form.dataset.plan,
       facturacion: form.dataset.billing,
@@ -608,11 +610,13 @@
     };
 
     try {
-      await fetch(LEAD_ENDPOINT, {
+      const res = await fetch(LEAD_ENDPOINT, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Accept': 'application/json' },
         body: JSON.stringify(payload),
       });
+      const result = await res.json().catch(function(){ return null; });
+      console.log('Respuesta de Web3Forms:', result);
     } catch (err) {
       // No bloqueamos el pago aunque falle el envío del formulario de datos;
       // igual queda el registro del lado de PayPal (nombre/correo del pagador).

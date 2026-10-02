@@ -289,7 +289,8 @@
       <div class="unit"
            data-plan="M+"
            data-price-monthly="1580" data-planid-monthly="P-6BM45350Y4950445HNK7MMOY"
-           data-price-annual="15800" data-planid-annual="P-0UF89697RC614950PNK7MMPA">
+           data-price-annual="15800" data-planid-annual="P-0UF89697RC614950PNK7MMPA"
+           data-stripeprice-monthly="price_1UMDcb4TjJl7J8VbC10rkMmr" data-stripeprice-annual="price_1UMDcb4TjJl7J8VbAAVHYJ4B">
         <div class="unit-top">
           <span class="unit-name">WINDOWS · M+</span>
           <div class="led-row"><span class="led"></span><span class="led"></span></div>
@@ -310,7 +311,8 @@
       <div class="unit"
            data-plan="L+"
            data-price-monthly="2690" data-planid-monthly="P-5MN42164W7539262SNK7MMPI"
-           data-price-annual="26900" data-planid-annual="P-8V293487006088333NK7MMPI">
+           data-price-annual="26900" data-planid-annual="P-8V293487006088333NK7MMPI"
+           data-stripeprice-monthly="price_1UMDcc4TjJl7J8Vbf1gMOAaG" data-stripeprice-annual="price_1UMDcc4TjJl7J8VbnauS22Kz">
         <div class="unit-top">
           <span class="unit-name">WINDOWS · L+</span>
           <div class="led-row"><span class="led"></span><span class="led"></span></div>
@@ -331,7 +333,8 @@
       <div class="unit featured"
            data-plan="XL+"
            data-price-monthly="4340" data-planid-monthly="P-2E804281772257742NK7MMPQ"
-           data-price-annual="43400" data-planid-annual="P-87227641N08967804NK7MMPY">
+           data-price-annual="43400" data-planid-annual="P-87227641N08967804NK7MMPY"
+           data-stripeprice-monthly="price_1UMDcc4TjJl7J8VbgfO59llW" data-stripeprice-annual="price_1UMDcc4TjJl7J8VblPDnLKaE">
         <div class="unit-top">
           <span class="unit-name">WINDOWS · XL+</span>
           <span class="badge">MÁS ELEGIDO</span>
@@ -352,7 +355,8 @@
       <div class="unit"
            data-plan="XXL+"
            data-price-monthly="6500" data-planid-monthly="P-86Y05606X1464515DNK7MMQA"
-           data-price-annual="65000" data-planid-annual="P-1LE73860R9802911ANK7MMQI">
+           data-price-annual="65000" data-planid-annual="P-1LE73860R9802911ANK7MMQI"
+           data-stripeprice-monthly="price_1UMDcd4TjJl7J8Vb4QfgAoeo" data-stripeprice-annual="price_1UMDcd4TjJl7J8VbRAKc8OIR">
         <div class="unit-top">
           <span class="unit-name">WINDOWS · XXL+</span>
           <div class="led-row"><span class="led"></span><span class="led"></span></div>
@@ -433,6 +437,14 @@
     <!-- Paso 2: pago (aparece después de llenar el formulario) -->
     <div id="paymentStep" style="display:none;">
       <p class="modal-note" style="margin-top:0;">Datos registrados. Elige cómo pagar:</p>
+
+      <button type="button" class="unit-cta" id="stripeCardBtn" onclick="startStripeCheckout()" style="background:#635BFF; color:#fff; margin-bottom:10px;">
+        💳 Pagar con tarjeta (sin cuenta)
+      </button>
+      <p id="stripeError" class="lead-error"></p>
+
+      <div style="text-align:center; font-size:11px; color:var(--dim); margin:10px 0;">— o —</div>
+
       <div id="paypal-button-container"></div>
     </div>
 
@@ -484,12 +496,24 @@
      Si más adelante prefieres guardar los datos en tu propio backend
      (iones-backend) y ligarlos automáticamente con la suscripción de
      PayPal, cambia LEAD_ENDPOINT por algo como:
-       https://tu-backend.onrender.com/api/leads
+       https://iones-backend.onrender.com/api/leads
      (esa ruta ya viene incluida en el backend, ver routes/leads.js —
      en ese caso también borra la línea de access_key del payload)
      ========================================================= */
   const LEAD_ENDPOINT = 'https://api.web3forms.com/submit';
   const WEB3FORMS_ACCESS_KEY = '21d98efb-db95-4162-9b70-105e82845e69';
+
+  /* =========================================================
+     BACKEND PARA STRIPE
+     =========================================================
+     El botón "Pagar con tarjeta (sin cuenta)" llama a tu backend
+     (iones-backend) para crear la sesión de pago de Stripe — esto
+     NO puede hacerse solo desde el navegador, por seguridad (se
+     necesita la clave secreta de Stripe, que nunca debe estar en
+     el HTML). Reemplaza esta URL por la de tu backend ya publicado
+     en Render (o donde lo hayas subido):
+     ========================================================= */
+  const BACKEND_URL = 'https://iones-backend.onrender.com';
 
   // Ciclo de facturación activo: 'annual' (por defecto) o 'monthly'
   let billingCycle = 'annual';
@@ -561,10 +585,15 @@
     document.getElementById('paymentStep').style.display = 'none';
     document.getElementById('paypal-button-container').innerHTML = '';
 
+    const stripePriceId = billingCycle === 'annual'
+      ? unit.getAttribute('data-stripeprice-annual')
+      : unit.getAttribute('data-stripeprice-monthly');
+
     // Guarda los datos del plan elegido en el propio formulario, para usarlos al enviarlo
     const form = document.getElementById('leadForm');
     form.dataset.plan = plan;
     form.dataset.planId = planId;
+    form.dataset.stripePriceId = stripePriceId;
     form.dataset.price = price;
     form.dataset.billing = billingCycle;
 
@@ -652,6 +681,38 @@
       }).render('#paypal-button-container');
     } else {
       container.innerHTML = '<p style="color:#ff8a8a; font-size:13px;">El SDK de PayPal no cargó. Revisa tu conexión o el client-id configurado.</p>';
+    }
+  }
+
+  async function startStripeCheckout(){
+    const form = document.getElementById('leadForm');
+    const btn = document.getElementById('stripeCardBtn');
+    const errorEl = document.getElementById('stripeError');
+    errorEl.textContent = '';
+    btn.disabled = true;
+    btn.textContent = 'Cargando...';
+
+    try {
+      const res = await fetch(BACKEND_URL + '/api/stripe/create-checkout-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          priceId: form.dataset.stripePriceId,
+          leadId: currentLeadId,
+          plan: form.dataset.plan,
+        }),
+      });
+      const data = await res.json();
+      if(data.ok && data.url){
+        window.location.href = data.url; // redirige a Stripe Checkout
+      } else {
+        throw new Error(data.error || 'No se pudo iniciar el pago');
+      }
+    } catch (err) {
+      console.error('Error con Stripe Checkout:', err);
+      errorEl.textContent = 'No se pudo cargar el pago con tarjeta. Verifica que el backend esté activo.';
+      btn.disabled = false;
+      btn.textContent = '💳 Pagar con tarjeta (sin cuenta)';
     }
   }
 

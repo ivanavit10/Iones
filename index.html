@@ -452,6 +452,17 @@
   </div>
 </div>
 
+<!-- Overlay de confirmación de pago -->
+<div class="overlay" id="successOverlay">
+  <div class="modal" style="text-align:center;">
+    <button class="modal-close" onclick="closeSuccess()">&times;</button>
+    <div style="font-size:48px; margin-bottom:12px;">✅</div>
+    <h3 style="margin-bottom:14px;">¡Pago exitoso!</h3>
+    <p class="modal-price" style="margin-bottom:0;">Nuestro personal se comunicará contigo para compartirte los datos de tu servidor.</p>
+    <button type="button" class="unit-cta" style="margin-top:22px;" onclick="closeSuccess()">Entendido</button>
+  </div>
+</div>
+
 <!--
   ============================================================
   CONFIGURACIÓN DE PAGOS (PayPal Subscriptions)
@@ -671,8 +682,7 @@
           });
         },
         onApprove: function(data){
-          alert('Suscripción iniciada. ID: ' + data.subscriptionID + '\n(Conecta esto a tu backend para activar el servidor ' + plan + ')');
-          closeCheckout();
+          showSuccess();
         },
         onError: function(err){
           console.error(err);
@@ -725,7 +735,29 @@
   });
 
   // Pinta los precios anuales apenas carga la página (billingCycle = 'annual' por defecto)
-  document.addEventListener('DOMContentLoaded', function(){ setBilling('annual'); });
+  function showSuccess(){
+    closeCheckout();
+    document.getElementById('successOverlay').classList.add('open');
+  }
+
+  function closeSuccess(){
+    document.getElementById('successOverlay').classList.remove('open');
+  }
+
+  document.getElementById('successOverlay').addEventListener('click', function(e){
+    if(e.target === this) closeSuccess();
+  });
+
+  document.addEventListener('DOMContentLoaded', function(){
+    setBilling('annual');
+
+    // Si Stripe nos regresó con ?pago=exitoso, mostramos el mensaje y limpiamos la URL
+    const params = new URLSearchParams(window.location.search);
+    if(params.get('pago') === 'exitoso'){
+      showSuccess();
+      history.replaceState({}, '', window.location.pathname);
+    }
+  });
 </script>
 
 </body>

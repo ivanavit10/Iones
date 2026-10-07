@@ -197,7 +197,6 @@
   .modal h3{ font-size:24px; margin-bottom:4px; }
   .modal .modal-price{ color:var(--dim); font-size:14px; margin-bottom:22px; }
   .modal .modal-price b{ color:var(--text); font-family:'IBM Plex Mono',monospace; }
-  #paypal-button-container{ min-height:45px; margin-top:6px; }
   .modal-note{ font-size:12px; color:var(--dim); margin-top:16px; text-align:center; }
 
   .lead-form{ display:flex; flex-direction:column; gap:12px; margin-top:6px; }
@@ -242,7 +241,7 @@
   <div class="wrap">
     <span class="eyebrow"><span class="dot"></span> Servidores Windows activos en minutos</span>
     <h1>Renta un servidor con la <span class="accent">carga de un ion</span>, la estabilidad de un rack.</h1>
-    <p class="sub">Windows Server dedicado, NVMe puro y soporte en español. Paga cada mes con tarjeta o PayPal, sin contratos forzosos.</p>
+    <p class="sub">Windows Server dedicado, NVMe puro y soporte en español. Paga cada mes con tarjeta, sin contratos forzosos.</p>
     <div class="hero-ctas">
       <a href="#planes" class="btn-primary">Elegir mi servidor</a>
       <a href="#como-funciona" class="btn-ghost">Cómo funciona</a>
@@ -261,7 +260,7 @@
       <div class="step">
         <span class="num">02 · PAGA</span>
         <h3>Registra tu cobro mensual</h3>
-        <p>Tarjeta de crédito, débito o PayPal. El cobro se repite cada mes de forma automática.</p>
+        <p>Tarjeta de crédito o débito. El cobro se repite cada mes de forma automática.</p>
       </div>
       <div class="step">
         <span class="num">03 · OPERA</span>
@@ -393,8 +392,8 @@
       <p>ionesventas@gmail.com · Soporte en español, cobertura nacional</p>
     </div>
     <p class="fine">
-      IONES renta infraestructura de servidores Windows con facturación mensual recurrente. Los precios están expresados en pesos mexicanos (MXN) e incluyen impuestos.
-      Este sitio es una plantilla funcional: la integración de pago mostrada requiere que conectes tus propias credenciales de PayPal Business (Client ID y planes de facturación) para procesar cobros reales — ver notas en el código fuente.
+      IONES renta infraestructura de servidores Windows con facturación mensual o anual recurrente. Los precios están expresados en pesos mexicanos (MXN) e incluyen IVA.
+      Los pagos se procesan de forma segura a través de Stripe.
     </p>
   </div>
 </footer>
@@ -439,16 +438,12 @@
       <p class="modal-note" style="margin-top:0;">Datos registrados. Elige cómo pagar:</p>
 
       <button type="button" class="unit-cta" id="stripeCardBtn" onclick="startStripeCheckout()" style="background:#635BFF; color:#fff; margin-bottom:10px;">
-        💳 Pagar con tarjeta (sin cuenta)
+        💳 Pagar con tarjeta
       </button>
       <p id="stripeError" class="lead-error"></p>
-
-      <div style="text-align:center; font-size:11px; color:var(--dim); margin:10px 0;">— o —</div>
-
-      <div id="paypal-button-container"></div>
     </div>
 
-    <p class="modal-note">Al confirmar, PayPal te permite pagar con tu cuenta o con tarjeta de crédito/débito como invitado. El cobro se repite automáticamente hasta que canceles.</p>
+    <p class="modal-note">El cobro se repite automáticamente hasta que canceles.</p>
   </div>
 </div>
 
@@ -465,36 +460,34 @@
 
 <!--
   ============================================================
-  CONFIGURACIÓN DE PAGOS (PayPal Subscriptions)
+  CONFIGURACIÓN DE PAGOS (Stripe Checkout / Subscriptions)
   ============================================================
-  Este sitio usa el PayPal JS SDK en modo "subscription" para cobrar
-  cada mes de forma automática (con opción de pagar con tarjeta como invitado).
+  Este sitio usa Stripe Checkout en modo suscripción para cobrar cada
+  mes o año de forma automática, con pago por tarjeta sin necesidad de
+  cuenta. El botón de pago llama a tu backend (iones-backend), que es
+  quien crea la sesión de pago con tu clave secreta de Stripe.
 
-  Para activarlo con cobros reales necesitas:
+  Ya configurado con:
+  - Los 8 Price ID de Stripe (4 mensuales + 4 anuales) en cada tarjeta
+    (data-stripeprice-monthly / data-stripeprice-annual).
+  - BACKEND_URL apuntando a tu backend publicado.
 
-  1) Una cuenta PayPal Business verificada.
-  2) Crear un "Producto" y 8 planes de facturación (4 mensuales + 4
-     anuales, uno de cada tipo por plan: M+, L+, XL+, XXL+) — el script
-     scripts/setup-catalog.js del backend ya los crea todos por ti.
-     Mensual: 1580, 2690, 4340, 6500 MXN/mes.
-     Anual:  15800, 26900, 43400, 65000 MXN/año (equivale a 10 meses, ahorras 2).
-  3) Reemplazar en el HTML:
-       client-id=...                        -> tu Client ID real de PayPal
-       data-planid-monthly="P-..."          -> Plan ID mensual real (uno por tarjeta)
-       data-planid-annual="P-..."           -> Plan ID anual real (uno por tarjeta)
-  4) Configurar un Webhook en PayPal (BILLING.SUBSCRIPTION.ACTIVATED /
-     .CANCELLED / .PAYMENT.FAILED) apuntando a tu backend, para que tu
-     sistema sepa cuándo activar o suspender cada servidor.
+  El backend necesita, en su .env (o en las variables de entorno de
+  donde lo publiques, ej. Render):
+  - STRIPE_SECRET_KEY (clave secreta de Stripe)
+  - STRIPE_WEBHOOK_SECRET (del webhook configurado en
+    Stripe Dashboard -> Developers -> Webhooks, apuntando a
+    https://tu-backend/webhooks/stripe)
+  - FRONTEND_URL (el dominio real de esta página, para que Stripe
+    sepa a dónde regresar al cliente después de pagar)
 
   Nota importante: cobrar de forma recurrente y activar servidores
-  automáticamente requiere un backend (Node, PHP, etc.) que reciba esos
-  webhooks y guarde el estado del cliente — esto no puede vivir sólo en
-  este HTML por seguridad. Este archivo cubre el front-end completo:
-  catálogo, precios y el botón de pago listo para conectarse.
+  automáticamente requiere ese backend — esto no puede vivir sólo en
+  este HTML por seguridad (la clave secreta nunca debe ir en el
+  navegador). Este archivo cubre el front-end completo: catálogo,
+  precios, formulario de empresa y el botón de pago ya conectado.
   ============================================================
 -->
-<script src="https://www.paypal.com/sdk/js?client-id=BAATWHAg47nPlOvSl1LTi9r-JiU0q5z65KWknOTug4zd59MDdR7DcLKFPjdVA73Mc3nYpNrMaazhIFKL1o&currency=MXN&intent=subscription&vault=true&locale=es_MX"></script>
-
 <script>
   /* =========================================================
      A DÓNDE LLEGA EL FORMULARIO DE EMPRESA
@@ -506,7 +499,7 @@
 
      Si más adelante prefieres guardar los datos en tu propio backend
      (iones-backend) y ligarlos automáticamente con la suscripción de
-     PayPal, cambia LEAD_ENDPOINT por algo como:
+     Stripe, cambia LEAD_ENDPOINT por algo como:
        https://iones-backend.onrender.com/api/leads
      (esa ruta ya viene incluida en el backend, ver routes/leads.js —
      en ese caso también borra la línea de access_key del payload)
@@ -594,7 +587,10 @@
     document.getElementById('leadSubmitBtn').disabled = false;
     document.getElementById('leadSubmitBtn').textContent = 'Continuar al pago';
     document.getElementById('paymentStep').style.display = 'none';
-    document.getElementById('paypal-button-container').innerHTML = '';
+    document.getElementById('stripeError').textContent = '';
+    const stripeBtn = document.getElementById('stripeCardBtn');
+    stripeBtn.disabled = false;
+    stripeBtn.textContent = '💳 Pagar con tarjeta';
 
     const stripePriceId = billingCycle === 'annual'
       ? unit.getAttribute('data-stripeprice-annual')
@@ -659,39 +655,12 @@
       console.log('Respuesta de Web3Forms:', result);
     } catch (err) {
       // No bloqueamos el pago aunque falle el envío del formulario de datos;
-      // igual queda el registro del lado de PayPal (nombre/correo del pagador).
+      // igual queda el registro ligado por leadId cuando llegue el webhook de Stripe.
       console.warn('No se pudo enviar el formulario de empresa:', err);
     }
 
     form.style.display = 'none';
     document.getElementById('paymentStep').style.display = 'block';
-    renderPayPalButton(form.dataset.planId, form.dataset.plan);
-  }
-
-  function renderPayPalButton(planId, plan){
-    const container = document.getElementById('paypal-button-container');
-    container.innerHTML = '';
-
-    if(window.paypal){
-      paypal.Buttons({
-        style:{ layout:'vertical', color:'gold', shape:'rect', label:'subscribe' },
-        createSubscription: function(data, actions){
-          return actions.subscription.create({
-            plan_id: planId,
-            custom_id: currentLeadId || undefined,
-          });
-        },
-        onApprove: function(data){
-          showSuccess();
-        },
-        onError: function(err){
-          console.error(err);
-          container.innerHTML = '<p style="color:#ff8a8a; font-size:13px;">No se pudo cargar el pago. Verifica el Plan ID de PayPal para este plan.</p>';
-        }
-      }).render('#paypal-button-container');
-    } else {
-      container.innerHTML = '<p style="color:#ff8a8a; font-size:13px;">El SDK de PayPal no cargó. Revisa tu conexión o el client-id configurado.</p>';
-    }
   }
 
   async function startStripeCheckout(){
